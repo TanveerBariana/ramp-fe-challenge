@@ -15,6 +15,8 @@ export function App() {
   const { data: transactionsByEmployee, ...transactionsByEmployeeUtils } =
     useTransactionsByEmployee();
   const [isLoading, setIsLoading] = useState(false);
+  /* fix 6 */
+  const [showViewMore, setShowViewMore] = useState(true);
 
   const transactions = useMemo(
     () => paginatedTransactions?.data ?? transactionsByEmployee ?? null,
@@ -26,19 +28,29 @@ export function App() {
     transactionsByEmployeeUtils.invalidateData();
 
     await employeeUtils.fetchAll();
-    await paginatedTransactionsUtils.fetchAll();
-
+    /* fix 5 */
     setIsLoading(false);
+    await paginatedTransactionsUtils.fetchAll();
   }, [employeeUtils, paginatedTransactionsUtils, transactionsByEmployeeUtils]);
 
   const loadTransactionsByEmployee = useCallback(
     async (employeeId: string) => {
       paginatedTransactionsUtils.invalidateData();
       await transactionsByEmployeeUtils.fetchById(employeeId);
+      /* fix 6 */
+      setShowViewMore(false);
     },
     [paginatedTransactionsUtils, transactionsByEmployeeUtils]
   );
-
+  /* fix 6 */
+  useEffect(() => {
+    if (
+      paginatedTransactions?.nextPage === null &&
+      !!paginatedTransactions?.data
+    ) {
+      setShowViewMore(false);
+    }
+  }, [paginatedTransactions]);
   useEffect(() => {
     if (employees === null && !employeeUtils.loading) {
       loadAllTransactions();
@@ -72,6 +84,8 @@ export function App() {
               newValue.lastName === "Employees"
             ) {
               await loadAllTransactions();
+              /*fix 6 */
+              setShowViewMore(true);
               return;
             }
 
